@@ -6,7 +6,7 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-# Prompt for the new user's namex
+# Prompt for the new user's name
 read -p "Enter the new user's name: " USERNAME
 
 # Check if the username is empty
@@ -21,15 +21,26 @@ if id "$USERNAME" &>/dev/null; then
     exit 1
 fi
 
-# Prompt for the new user's password
-read -s -p "Enter the password for the new user: " PASSWORD
-echo
+# Prompt for the new user's password twice
+while true; do
+    read -s -p "Enter the password for the new user: " PASSWORD
+    echo
+    read -s -p "Confirm the password: " PASSWORD_CONFIRM
+    echo
 
-# Check if the password is empty
-if [ -z "$PASSWORD" ]; then
-    echo "The password cannot be empty."
-    exit 1
-fi
+    # Check if the password is empty
+    if [ -z "$PASSWORD" ]; then
+        echo "The password cannot be empty."
+        continue
+    fi
+
+    # Check if both passwords match
+    if [ "$PASSWORD" != "$PASSWORD_CONFIRM" ]; then
+        echo "Passwords do not match. Please try again."
+    else
+        break
+    fi
+done
 
 # Create the new user
 echo "Creating the user '$USERNAME'..."
