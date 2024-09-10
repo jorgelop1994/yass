@@ -71,3 +71,6 @@ echo "Restarting Docker service..."
 systemctl restart docker || error_exit "Failed to restart Docker service."
 
 echo "Docker installation and security configuration completed successfully."
+
+# Final notes for the user
+echo "Note: After running this script, it is recommended to log out and log back in to apply Docker group changes."
