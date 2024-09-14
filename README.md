@@ -15,7 +15,7 @@ YASS is a set of automation scripts designed to help you configure your server f
 
 📜 Scripts Overview
 
-1. 1-createUser
+1-createUser
 
 This script creates a new user on your VPS with secure practices:
 
@@ -24,7 +24,7 @@ This script creates a new user on your VPS with secure practices:
 	•	Sets a secure password for the new user.
 	•	Adds the new user to the sudo group for administrative privileges.
 
-2. 2-setupSecurity
+2-setupSecurity
 
 Automates the configuration of essential security measures:
 
@@ -35,7 +35,7 @@ Automates the configuration of essential security measures:
 	•	Rootkit Detection: Installs rkhunter and chkrootkit for rootkit detection.
 	•	Kernel Hardening: Applies kernel parameter hardening to protect against network attacks.
 
-3. 3-googleAuthenticator
+3-googleAuthenticator
 
 Sets up Google Authenticator for Two-Factor Authentication (2FA):
 
@@ -43,7 +43,7 @@ Sets up Google Authenticator for Two-Factor Authentication (2FA):
 	•	Configures SSH to use Google Authenticator for an additional layer of security.
 	•	Guides the user through the setup process for Google Authenticator.
 
-4. 4-dockerInstallation
+4-dockerInstallation
 
 Installs and configures Docker securely:
 
@@ -51,7 +51,7 @@ Installs and configures Docker securely:
 	•	Configures Docker to start on boot and adds the current user to the Docker group.
 	•	Applies security recommendations, such as disabling legacy iptables chains.
 
-5. 5-advancedPortKnocking
+5-advancedPortKnocking
 
 Implements advanced port knocking techniques to secure your server:
 
