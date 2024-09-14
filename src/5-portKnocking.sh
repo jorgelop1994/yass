@@ -90,32 +90,24 @@ EOF
     for i in "${!PORTS_TO_ALLOW[@]}"; do
         PORT="${PORTS_TO_ALLOW[i]}"
         LIFESPAN="${PORT_LIFESPAN[i]}"
-        TIMESTAMP_FILE="${TIMESTAMP_DIR}/port_${PORT}.ts"
         
         sudo bash -c "cat >> ${CLEANUP_SCRIPT_PATH}" <<EOF
-if [ -f "${TIMESTAMP_FILE}" ]; then
-  LAST_KNOCK_TIME=\$(stat -c %Y "${TIMESTAMP_FILE}")
-  CURRENT_TIME=\$(date +%s)
-  TIME_DIFF=\$((CURRENT_TIME - LAST_KNOCK_TIME))
+for TIMESTAMP_FILE in ${TIMESTAMP_DIR}/port_${PORT}_*.ts; do
+  if [ -f "\${TIMESTAMP_FILE}" ]; then
+    LAST_KNOCK_TIME=\$(stat -c %Y "\${TIMESTAMP_FILE}")
+    CURRENT_TIME=\$(date +%s)
+    TIME_DIFF=\$((CURRENT_TIME - LAST_KNOCK_TIME))
 
-  if [ "\$TIME_DIFF" -lt "${LIFESPAN}" ]; then
-    echo "Port ${PORT} has been refreshed recently. No need to close."
-    continue
+    if [ "\$TIME_DIFF" -ge "${LIFESPAN}" ]; then
+      IP=\$(basename "\${TIMESTAMP_FILE}" | cut -d'_' -f3 | sed 's/.ts//')
+      ufw delete allow from \${IP} to any port ${PORT} proto tcp
+      echo "\$(date): Port ${PORT} closed for IP \${IP} by cleanup script" >> ${LOG_FILE}
+      rm -f "\${TIMESTAMP_FILE}"
+    else
+      echo "Port ${PORT} for IP \${IP} is still within lifespan."
+    fi
   fi
-fi
-
-# Only remove rules if the port's lifespan has been exceeded
-RULES=\$(ufw status numbered | grep "${PORT}/tcp" | awk -F"[][]" '{print \$2}' | tac)
-
-if [ ! -z "\$RULES" ]; then
-  echo "Removing UFW rules for port ${PORT}..."
-  for RULE in \$RULES; do
-    ufw --force delete \$RULE
-    echo "\$(date): Port ${PORT} automatically closed by cleanup script" >> ${LOG_FILE}
-  done
-else
-  echo "No UFW rules found for port ${PORT}."
-fi
+done
 
 EOF
     done
