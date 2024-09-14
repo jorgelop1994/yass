@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Configuration
-CLEANUP_INTERVAL_MINUTES=5  # Interval in minutes for automatic cleanup
+CLEANUP_INTERVAL_MINUTES=1  # Interval in minutes for automatic cleanup
 PORTS_TO_ALLOW=(2222 80)       # Array of ports to allow access dynamically
 KNOCK_SEQUENCES_OPEN=("7000,8000,9000" "6000,7000,8000")  # Different knock sequences for opening each port
 KNOCK_SEQUENCES_CLOSE=("9000,8000,7000" "8000,7000,6000") # Different knock sequences for closing each port
-SEQ_TIMEOUTS=(15 20)         # Array of seq_timeout values (in seconds) for each port
+SEQ_TIMEOUTS=(3 3)         # Array of seq_timeout values (in seconds) for each port
 PORT_LIFESPAN=(3600 3600)      # Array of lifespan values (in seconds) for each port
 LOG_FILE="/var/log/port_knocking.log"  # Log file for events
 TIMESTAMP_DIR="/var/run/port_knock"  # Directory to store timestamp files
@@ -32,6 +32,9 @@ configure_ufw() {
 configure_knockd() {
     echo "Configuring knockd..."
     sudo mkdir -p ${TIMESTAMP_DIR}  # Create directory for timestamp files
+    sudo chown root:root ${TIMESTAMP_DIR}  # Set correct ownership
+    sudo chmod 755 ${TIMESTAMP_DIR}  # Ensure the directory is writable
+
     sudo bash -c "cat > /etc/knockd.conf" <<EOL
 [options]
     UseSyslog
@@ -44,26 +47,25 @@ EOL
         KNOCK_CLOSE="${KNOCK_SEQUENCES_CLOSE[i]}"
         TIMEOUT="${SEQ_TIMEOUTS[i]}"
         LIFESPAN="${PORT_LIFESPAN[i]}"
-        TIMESTAMP_FILE="${TIMESTAMP_DIR}/port_${PORT}.ts"
         
         sudo bash -c "cat >> /etc/knockd.conf" <<EOL
 
 [openPort${PORT}]
     sequence = ${KNOCK_OPEN}
     seq_timeout = ${TIMEOUT}
-    command = ufw allow from %IP% to any port ${PORT} proto tcp && echo "\$(date): Port ${PORT} opened for %IP%" >> ${LOG_FILE} && sudo touch ${TIMESTAMP_FILE}
+    command = ufw allow from %IP% to any port ${PORT} proto tcp && echo "\$(date): Port ${PORT} opened for %IP%" >> ${LOG_FILE} && touch ${TIMESTAMP_DIR}/port_${PORT}_%IP%.ts
     tcpflags = syn
 
 [refreshPort${PORT}]
     sequence = ${KNOCK_OPEN}
     seq_timeout = ${TIMEOUT}
-    command = ufw allow from %IP% to any port ${PORT} proto tcp && echo "\$(date): Port ${PORT} refreshed for %IP%" >> ${LOG_FILE} && sudo touch ${TIMESTAMP_FILE}
+    command = ufw allow from %IP% to any port ${PORT} proto tcp && echo "\$(date): Port ${PORT} refreshed for %IP%" >> ${LOG_FILE} && touch ${TIMESTAMP_DIR}/port_${PORT}_%IP%.ts
     tcpflags = syn
 
 [closePort${PORT}]
     sequence = ${KNOCK_CLOSE}
     seq_timeout = ${TIMEOUT}
-    command = ufw delete allow from %IP% to any port ${PORT} proto tcp && echo "\$(date): Port ${PORT} closed for %IP%" >> ${LOG_FILE} && sudo rm -f ${TIMESTAMP_FILE}
+    command = ufw delete allow from %IP% to any port ${PORT} proto tcp && echo "\$(date): Port ${PORT} closed for %IP%" >> ${LOG_FILE} && rm -f ${TIMESTAMP_DIR}/port_${PORT}_%IP%.ts
     tcpflags = syn
 EOL
     done
@@ -81,6 +83,7 @@ create_cleanup_script() {
 #!/bin/bash
 
 # Automatic cleanup script for UFW rules on ports: ${PORTS_TO_ALLOW[*]}
+
 EOF
 
     # Add rules cleanup for each port
@@ -101,6 +104,7 @@ if [ -f "${TIMESTAMP_FILE}" ]; then
   fi
 fi
 
+# Only remove rules if the port's lifespan has been exceeded
 RULES=\$(ufw status numbered | grep "${PORT}/tcp" | awk -F"[][]" '{print \$2}' | tac)
 
 if [ ! -z "\$RULES" ]; then
