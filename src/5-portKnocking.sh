@@ -6,7 +6,7 @@ PORTS_TO_ALLOW=(2222 80)       # Array of ports to allow access dynamically
 KNOCK_SEQUENCES_OPEN=("7000,8000,9000" "6000,7000,8000")  # Different knock sequences for opening each port
 KNOCK_SEQUENCES_CLOSE=("9000,8000,7000" "8000,7000,6000") # Different knock sequences for closing each port
 SEQ_TIMEOUTS=(3 3)         # Array of seq_timeout values (in seconds) for each port
-PORT_LIFESPAN=(3600 3600)      # Array of lifespan values (in seconds) for each port
+PORT_LIFESPAN=(300 3600)      # Array of lifespan values (in seconds) for each port
 LOG_FILE="/var/log/port_knocking.log"  # Log file for events
 TIMESTAMP_DIR="/var/run/port_knock"  # Directory to store timestamp files
 
