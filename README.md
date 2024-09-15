@@ -42,6 +42,7 @@ Sets up Google Authenticator for Two-Factor Authentication (2FA):
 	•	Installs the Google Authenticator PAM module.
 	•	Configures SSH to use Google Authenticator for an additional layer of security.
 	•	Guides the user through the setup process for Google Authenticator.
+ 	•	Note: Make sure you are logged in as the user you created to replace the root user.
 
 4-dockerInstallation
 
