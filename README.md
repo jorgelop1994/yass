@@ -56,7 +56,7 @@ Installs and configures Docker securely:
 Implements advanced port knocking techniques to secure your server:
 
 	•	Installs necessary packages (ufw and knockd).
-	•	Configures multiple port knocking sequences for dynamic port access control.
+	•	Configures multiple port knocking sequences for dynamic port access control in a straightforward way.
 	•	Sets up automatic cleanup scripts for expired port rules to maintain security.
 	•	Schedules regular cleanup via cron.
 
