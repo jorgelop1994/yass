@@ -28,6 +28,10 @@ ufw default allow outgoing || error_exit "Failed to set default allow outgoing p
 ufw allow ssh || error_exit "Failed to allow SSH in UFW."
 ufw --force enable || error_exit "Failed to enable UFW."
 
+# Ensure UFW is enabled on boot
+echo "Enabling UFW to start on boot..."
+systemctl enable ufw || error_exit "Failed to enable UFW on boot."
+
 # 3. Disable SSH access for root
 echo "Disabling SSH access for root..."
 sed -i 's/^#\?PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config || error_exit "Failed to disable root SSH access."
@@ -51,9 +55,14 @@ echo "Installing Fail2Ban..."
 apt install fail2ban -y || error_exit "Failed to install Fail2Ban."
 
 echo "Configuring Fail2Ban..."
-cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local || error_exit "Failed to back up Fail2Ban configuration."
 
-cat <<EOL | tee -a /etc/fail2ban/jail.local > /dev/null
+# Check if the [sshd] section already exists in /etc/fail2ban/jail.local
+if grep -q "^\[sshd\]" /etc/fail2ban/jail.local; then
+    echo "Updating existing [sshd] section in Fail2Ban config..."
+    sed -i "s/^port = .*/port = $NEW_SSH_PORT/" /etc/fail2ban/jail.local || error_exit "Failed to update SSH port in Fail2Ban config."
+else
+    echo "Adding [sshd] section to Fail2Ban config..."
+    cat <<EOL | tee -a /etc/fail2ban/jail.local > /dev/null
 [sshd]
 enabled = true
 port = $NEW_SSH_PORT
@@ -64,10 +73,15 @@ bantime = 3600
 findtime = 600
 ignoreip = 127.0.0.1
 EOL
+fi
 
 # Restart Fail2Ban to apply the configuration
 echo "Restarting Fail2Ban..."
 systemctl restart fail2ban || error_exit "Failed to restart Fail2Ban."
+
+# Enable Fail2Ban to start on boot
+echo "Enabling Fail2Ban to start on boot..."
+systemctl enable fail2ban || error_exit "Failed to enable Fail2Ban on boot."
 
 # Install rkhunter and chkrootkit
 echo "Installing rkhunter and chkrootkit..."
@@ -100,13 +114,5 @@ net.ipv4.conf.default.log_martians = 1
 EOL
 
 sysctl -p || error_exit "Failed to apply kernel parameter changes."
-
-# Enable Fail2Ban to start on boot
-echo "Enabling Fail2Ban to start on boot..."
-systemctl enable fail2ban || error_exit "Failed to enable Fail2Ban on boot."
-
-# Ensure UFW is enabled on boot
-echo "Enabling UFW to start on boot..."
-systemctl enable ufw || error_exit "Failed to enable UFW on boot."
 
 echo "Security measures successfully applied."
