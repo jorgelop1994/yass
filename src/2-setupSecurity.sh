@@ -101,4 +101,12 @@ EOL
 
 sysctl -p || error_exit "Failed to apply kernel parameter changes."
 
+# Enable Fail2Ban to start on boot
+echo "Enabling Fail2Ban to start on boot..."
+systemctl enable fail2ban || error_exit "Failed to enable Fail2Ban on boot."
+
+# Ensure UFW is enabled on boot
+echo "Enabling UFW to start on boot..."
+systemctl enable ufw || error_exit "Failed to enable UFW on boot."
+
 echo "Security measures successfully applied."
