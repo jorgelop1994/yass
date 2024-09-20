@@ -25,6 +25,13 @@ configure_ufw() {
     echo "Configuring UFW..."
     sudo ufw default deny incoming
     sudo ufw default allow outgoing
+    
+    # Remove any existing UFW rules for the specified ports
+    for port in "${PORTS_TO_ALLOW[@]}"; do
+        sudo ufw delete allow ${port} || true  # Allow the command to fail silently if the rule does not exist
+        sudo ufw delete deny ${port} || true   # Allow the command to fail silently if the rule does not exist
+    done
+
     echo "y" | sudo ufw enable  # Automatically confirm enabling UFW
 }
 
